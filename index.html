@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexique Interactif - SharePoint</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 30px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            outline: none;
+            transition: transform 0.2s;
+        }
+
+        #searchInput:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        #lexiqueList {
+            display: grid;
+            gap: 15px;
+        }
+
+        .lexique-item {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+            animation: fadeIn 0.3s;
+            align-items: start;
+        }
+
+        .lexique-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .terme {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .definition {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .no-results-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            background: yellow;
+            font-weight: bold;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .lexique-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .terme {
+                border-bottom: 2px solid #667eea;
+                padding-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Lexique Interactif</h1>
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Rechercher un terme ou une définition..."
+                    autocomplete="off"
+                >
+                <span class="search-icon">🔍</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalTerms">0</div>
+                    <div class="stat-label">Termes au total</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="displayedTerms">0</div>
+                    <div class="stat-label">Termes affichés</div>
+                </div>
+            </div>
+
+            <div id="lexiqueList"></div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // DONNÉES DU LEXIQUE - MODIFIEZ ICI
+        // ========================================
+        // Pour mettre à jour le lexique :
+        // 1. Utilisez le convertisseur Excel vers JSON
+        // 2. Copiez le code généré
+        // 3. Remplacez la variable lexiqueData ci-dessous
+        
+        let lexiqueData = [
+              {
+				"Name": "AU Deliverable creation",
+				"Description": "Create audio deliverable according to specs",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU Edit",
+				"Description": "Edit audio",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU Edit + Mix 2.0",
+				"Description": "Audio Edit and Mix 2.0",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU Edit + Mix 5.1",
+				"Description": "Audio Edit and Mix 5.1",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU ICR",
+				"Description": "Audio In Client Review – Client listening to dubbed audio track or a low res video screener (previous tasks can determine what the team creates)",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU M&E Check",
+				"Description": "Checking the effects track provided by the client against the video",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU M&E Creation",
+				"Description": "Create the new effects / sound design",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU Mix 2.0",
+				"Description": "Mix audio",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU Mix 5.1",
+				"Description": "Mix audio",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU PG creation & approval",
+				"Description": "Create Pronounciation Guide and have it approved by client",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU Post Client Review",
+				"Description": "Audio script feedback implementation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU Preflight",
+				"Description": "Review instructions and translations received from eLearning team",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU QC 3 Points",
+				"Description": "Perfom media QC, fill QC report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU QC 5 Points",
+				"Description": "Perfom media QC, fill QC report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU QC Auto",
+				"Description": "Automatic media QC",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU QC Linear",
+				"Description": "Perfom media QC, fill QC report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU Record Lip-sync Dubbing",
+				"Description": "Record lip-sync audio",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU Record Retakes",
+				"Description": "Record retakes",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU Record Timed VO",
+				"Description": "Record audio",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU Record TTS",
+				"Description": "Generate TTS audio. Includes script preparation.",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU Record TTS PG only",
+				"Description": "Generate TTS audio. Includes script preparation. Pronunciation Guide terms only.",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AU Record Untimed VO",
+				"Description": "Record untimed audio",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV - Deliverable Creation – Edit + AU",
+				"Description": "Video deliverable creation with edit and audio layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV – Deliverable Creation – Edit + GFX",
+				"Description": "Video deliverable creation with edit and graphics layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV - Deliverable Creation – Edit + GFX + AU",
+				"Description": "Video deliverable creation with edit, graphics and audio layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV - Deliverable Creation – Edit + SUB",
+				"Description": "Video deliverable creation with edit and subtitle layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV - Deliverable Creation – Edit + SUB + GFX",
+				"Description": "Video deliverable creation with edit, graphics and subtitle layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV - Deliverable Creation – Edit + SUB +AU",
+				"Description": "Video deliverable creation with edit, audio and subtitle layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV - Deliverable Creation – Edit + SUB+ GFX+ AU",
+				"Description": "Video deliverable creation with edit, graphics and audio layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV - Graphics Collect Project",
+				"Description": "Graphics project collection and export",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV - Graphics Creation - Dub Card",
+				"Description": "Graphics dub card creation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV - Graphics Validation",
+				"Description": "Graphics project validation and graphics work estimation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Deliverable creation",
+				"Description": "Create deliverable according to specs",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Deliverable Creation - AU",
+				"Description": "Video deliverable creation audio layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Deliverable Creation - Edit",
+				"Description": "Video deliverable creation with video edit",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Deliverable Creation - GFX",
+				"Description": "Video deliverable creation with graphics layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Deliverable Creation - GFX + AU",
+				"Description": "Video deliverable creation with graphics and audio layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Deliverable Creation - SUB",
+				"Description": "Video deliverable creation with subtitle layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Deliverable Creation - SUB + AU",
+				"Description": "Video deliverable creation with subtitle and audio layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Deliverable Creation - SUB + GFX",
+				"Description": "Video deliverable creation with subtitle and graphics layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Deliverable Creation - SUB + GFX + AU",
+				"Description": "Video deliverable creation with subtitle, graphics and audio layback",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Deliverable QC",
+				"Description": "Perform QC on Deliverable",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Edit",
+				"Description": "Edit media containing audio and video",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Graphic replacement",
+				"Description": "Replacing graphic elements with localized versions",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Graphics Creation",
+				"Description": "Create graphics",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Graphics Report Creation",
+				"Description": "Create graphics report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV ICR",
+				"Description": "Video In Client Review – Can be used for graphics or audio/subtitles with the video, depending on previous tasks and instructions",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Layback Audio",
+				"Description": "Layback the mixed audio to the video",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Layback GFX",
+				"Description": "Layback the mixed GFX to the video",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Layback Subs",
+				"Description": "Layback the mixed Subs to the video",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV QC 3 Points",
+				"Description": "Perfom media QC, fill QC report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV QC 5 Points",
+				"Description": "Perfom media QC, fill QC report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV QC Auto",
+				"Description": "Automatic media QC",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV QC Fast Forward",
+				"Description": "Perfom media QC, fill QC report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV QC Graphics",
+				"Description": "Perform QC on graphics elements",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV QC Linear",
+				"Description": "Perfom media QC, fill QC report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Screener creation",
+				"Description": "Create video screener according to specs - Audio or Subs or GFX? Or All?",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Source files check",
+				"Description": "Check source files and potential project for scope and approach",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Subtitles Burn-in",
+				"Description": "Subtitles burn-in",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Tech Check",
+				"Description": "Perform technical check on media",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Transcode",
+				"Description": "Transcode media file",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "AV Validate textless elements",
+				"Description": "Validate accuracy of textless elements",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "DTP Delivery",
+				"Description": "Delivery of final DTPed files",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "DTP Edit",
+				"Description": "Post-Localization DTP",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "DTP Feedback implementation",
+				"Description": "DTP Feedback implementation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "DTP PMFE",
+				"Description": "Final eye review of formatting",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "DTP QC",
+				"Description": "post-DTP QM",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eL AV implementation",
+				"Description": "Audio + Video Module Implementation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eL Contact Sheet",
+				"Description": "Text extracted from non editable images",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eL File Preparation",
+				"Description": "Files preparation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eL ICR",
+				"Description": "Client review after build",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eL Module formatting",
+				"Description": "Layout of the module",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eL PMFE",
+				"Description": "Feedback Implementation Validation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eL Post client Implementation",
+				"Description": "Feedback Implementation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eL Post client Review",
+				"Description": "Feedback Review",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eL Preflight",
+				"Description": "Planning and kick-off preparation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eL Publish",
+				"Description": "Compilation of the module",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eL Testing",
+				"Description": "Linguistic and functional testing",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Alpha Creation",
+				"Description": "Creation of the first version of a module",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Alpha ID Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Alpha Testing",
+				"Description": "Linguistic and functional testing",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Alpha UI Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD AS ID Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Audio Script Creation",
+				"Description": "ID preparation of the script in the media template",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Beta Creation",
+				"Description": "Alpha feedback implementation and audio implementation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD CM ID Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Content Map Creation",
+				"Description": "The structure of the eLearning, showing what content should go in which section of the training",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Debrief Meeting",
+				"Description": "Production team meeting once project has been done",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Fixing",
+				"Description": "Fixing the module/sample by developer",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Interactive Sample Creation",
+				"Description": "Interactive sample creation by dev",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD IS ID Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD IS Testing",
+				"Description": "Linguistic and functional testing",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD IS UI Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Iteration Creation",
+				"Description": "UI/ID working in PPT creation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Proofreading",
+				"Description": "Linguistic check of SB, PT or module",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Prototype Creation",
+				"Description": "Creation of a visual representation of the content incl. the approved graphics (in the visual proposal)",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD PT DEV Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD PT ID Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD PT UI Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD SB DEV Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD SB ID Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Storyboard Creation",
+				"Description": "Content representation for the client and ID to be aligned on what content should go into the module",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Template UI Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD UI Template Creation",
+				"Description": "Prototype template created by an UI/UX designer",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD Visual Proposal Creation",
+				"Description": "Visual proposal creation by UI/UX designer to show the look and feel of the course",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "eLD VP UI Check",
+				"Description": "Internal check",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "GL glossary and sample creation",
+				"Description": "Glossary and Translation preview creation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "GL glossary and sample ICR",
+				"Description": "Glossary and Translation preview ICR",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "GL glossary and sample post-client Review",
+				"Description": "Glossary and Translation preview post ICR",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "GL glossary and sample translation",
+				"Description": "Glossary and Translation preview translation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Asset Transfer",
+				"Description": "Transfer files to External vendor",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Delivery",
+				"Description": "Deliver file",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Delivery AU + AV",
+				"Description": "Delivery of Audio and Video files",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Delivery Audio",
+				"Description": "Delivery file for Audio",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Delivery Graphics",
+				"Description": "Delivery file for Graphics",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Delivery SUB + AU",
+				"Description": "Delivery of Subtitle and Audio files",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Delivery SUB + AU + GFX",
+				"Description": "Delivery of Subtitle and Audio and Graphics files",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Delivery SUB + AU + GFX + AV",
+				"Description": "Delivery of Subtitle, Audio, Video and Graphics files",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Delivery Subtitles",
+				"Description": "Delivery file for subtitle",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Delivery Transcript",
+				"Description": "Delivery file for Transcript",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Delivery Video",
+				"Description": "Delivery file for Video",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Ingest Audio",
+				"Description": "Ingest Audio",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Ingest Graphics",
+				"Description": "Ingest Graphics",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Ingest Subtitles",
+				"Description": "Ingest Subtitles",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Ingest Transcript",
+				"Description": "Ingest Transcript",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "IO Ingest Video",
+				"Description": "Ingest Video",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Adaptation",
+				"Description": "Changing the script to adapt it to another style of text, for lip-synch",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Conform",
+				"Description": "Settings change to speed, offset, export to client spec",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Deliverable Creation",
+				"Description": "Create deliverable according to specs",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Export / Convert",
+				"Description": "Convert one format to another one (no content or TC changes)",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Export Graphics",
+				"Description": "Export of GFX package (PNG/XML or other) for Subtitle burn in",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT File Rename",
+				"Description": "Rename of file",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT FN Template Creation",
+				"Description": "Creation of EMT for FN Subtitles",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT ICR",
+				"Description": "Implementation of client review",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Length check",
+				"Description": "Checking the length of the script and making sure it fits in the audio",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Machine Translation Post-Edit",
+				"Description": "Review and correct machine translated content",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Micro positionning",
+				"Description": "Place subtitles on screen",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT PMFE",
+				"Description": "Linear 'Final eye' review of formatting, punctuation, double spaces, dates, client names, consistency, completeness, client instruction etc.",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Post client Review",
+				"Description": "Lingusit review & implement client changes",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT QC linguistic 3pts",
+				"Description": "Perfom 3 points linguistic QC, apply fixes, fill QC report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT QC linguistic 5pts",
+				"Description": "Perfom 5 points linguistic QC, apply fixes, fill QC report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT QC linguistic linear",
+				"Description": "Perfom linear linguistic QC; (i.e. review translated content), apply fixes, fill QC report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT QC technical 3pts",
+				"Description": "Perfom 3 points technical QC, apply fixes, fill QC report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT QC Technical 3pts + DLVC",
+				"Description": "Subtitle Technical QC 3pts and Deliverable Creation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT QC Technical 3pts + DLVC + GFX",
+				"Description": "Subtitle Technical QC 3pts and Deliverable Creation and Graphics Export",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT QC Technical 3pts + GFX",
+				"Description": "Subtitle Technical QC 3pts and Graphics Export",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT QC technical 5pts",
+				"Description": "Perfom 5 points technical QC, apply fixes, fill QC report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT QC technical linear",
+				"Description": "Perfom linear technical QC, apply fixes, fill QC report",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT QC technical linear + DLVC",
+				"Description": "Subtitle Technical QC linear and Deliverable Creation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT QC Technical linear + DLVC + GFX",
+				"Description": "Subtitle Technical QC linear and Deliverable Creation and Graphics Export",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT QC Technical linear + GFX",
+				"Description": "Subtitle Technical QC linear and Graphics Export",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Quality Management",
+				"Description": "Quality check of translation, including automated checks",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Re-Cut Complex",
+				"Description": "Change and Check speed, offset, edit text to match media + positioning, spec changes, complex timing…",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Recut Complex + DLVC",
+				"Description": "Subtitle Recut Complex and Deliverable Creation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Re-Cut Simple",
+				"Description": "Change and Check speed, offset, edit text to match media",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Recut Simple + DLVC",
+				"Description": "Subtitle Recut Simple and Deliverable Creation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Template Creation",
+				"Description": "Creation of EMT for subtitles or dubbing from client video and script",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Template QC",
+				"Description": "QC of translation template received from eLearning team",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Timecoding",
+				"Description": "Timecode text present on media",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Timecoding + DLVC",
+				"Description": "Subtitle Timecoding and Deliverable Creation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Timecoding + DLVC + GFX",
+				"Description": "Subtitle Timecoding and Deliverable Creation and Graphics Export",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Timecoding + GFX",
+				"Description": "Subtitle Timecoding and Deliverable Creation",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Transcription",
+				"Description": "Convert audio into text (without TC)",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  },
+			  {
+				"Name": "TT Translation",
+				"Description": "Translate existing content (audio or text) to another language",
+				"Description FR": "",
+				"cost category": "",
+				"estimated effort": ""
+			  }
+        ];
+
+        // ========================================
+        // CODE DU LEXIQUE - NE PAS MODIFIER
+        // ========================================
+
+        // Fonction pour afficher le lexique
+        function displayLexique(data) {
+            const container = document.getElementById('lexiqueList');
+            
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-icon">🔍</div>
+                        <h3>Aucun résultat trouvé</h3>
+                        <p>Essayez avec d'autres termes de recherche</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.map(item => `
+                <div class="lexique-item">
+                    <div class="terme">${item.Name}</div>
+                    <div class="definition">${item.Description}</div>
+                </div>
+            `).join('');
+        }
+
+        // Fonction de recherche avec surlignage
+        function searchLexique(query) {
+            if (!query) {
+                displayLexique(lexiqueData);
+                updateStats(lexiqueData.length, lexiqueData.length);
+                return;
+            }
+
+            const searchTerm = query.toLowerCase();
+            const filtered = lexiqueData.filter(item => 
+                item.Name.toLowerCase().includes(searchTerm) || 
+                item.Description.toLowerCase().includes(searchTerm)
+            );
+
+            // Créer une version avec surlignage
+            const highlighted = filtered.map(item => ({
+                Name: highlightText(item.Name, searchTerm),
+                Description: highlightText(item.Description, searchTerm)
+            }));
+
+            displayLexique(highlighted);
+            updateStats(lexiqueData.length, filtered.length);
+        }
+
+        // Fonction pour surligner le texte
+        function highlightText(text, search) {
+            const regex = new RegExp(`(${search})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        // Fonction pour mettre à jour les statistiques
+        function updateStats(total, displayed) {
+            document.getElementById('totalTerms').textContent = total;
+            document.getElementById('displayedTerms').textContent = displayed;
+        }
+
+        // Recherche en temps réel
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            searchLexique(e.target.value);
+        });
+
+        // Initialiser l'affichage au chargement
+        window.addEventListener('DOMContentLoaded', function() {
+            displayLexique(lexiqueData);
+            updateStats(lexiqueData.length, lexiqueData.length);
+        });
+    </script>
+</body>
+</html>
